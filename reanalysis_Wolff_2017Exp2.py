@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[6]:
+# In[135]:
 
 
 """
@@ -21,7 +21,7 @@ import scipy as sp
 from numpy import matlib as mp
 import scipy.spatial.distance
 import scipy.ndimage
-
+from sklearn.covariance import GraphicalLassoCV, ledoit_wolf
 
 #---------define variables------------
 angspace = np.array(np.arange(-math.pi,math.pi,math.pi/6))
@@ -75,12 +75,17 @@ def mahalTune_func(data,theta,angspace,bin_width):
         
         for ti in range(data.shape[2]):
             if ~np.isnan(trn_dat[:,:,ti]).all():
-        
+                #model = GraphicalLassoCV()
+                #model.fit(trn_dat[:,:,ti])
+                #cov_ = model.covariance_
+                #sigma = model.precision_
+                #lw_cov_, _ = ledoit_wolf(trn_dat[:,:,ti])
+                #sigma = np.linalg.inv(lw_cov_)
         
                 # covariance matrix
-                sigma = covdiag(trn_dat[:,:,ti])
+                sigma = np.linalg.inv(covdiag(trn_dat[:,:,ti])) #np.cov(np.transpose(trn_dat[:,:,ti]))#
                 for v in np.arange(m.shape[0]):
-                    d_tune[trl,v,ti] = scipy.spatial.distance.mahalanobis(np.squeeze(m[v,:,ti]),np.squeeze(data[trl,:,ti]),np.linalg.inv(sigma))
+                    d_tune[trl,v,ti] = scipy.spatial.distance.mahalanobis(np.squeeze(m[v,:,ti]),np.squeeze(data[trl,:,ti]),sigma)
                 cos_amp[trl,ti] = -(np.mean(np.multiply(np.cos(angspace),np.transpose(np.squeeze(d_tune[trl,:,ti])))))
 
     return cos_amp, d_tune
@@ -130,13 +135,13 @@ for i in subID:
     
     
 #--------exclude bad trials--------
-    incl_impul1_sess_1 = np.logical_not(np.in1d(range(impul1_sess_1['trial'].shape[0]),impul1_sess_1['bad_trials']))
-    incl_impul2_sess_1 = np.logical_not(np.in1d(range(impul2_sess_1['trial'].shape[0]),impul2_sess_1['bad_trials']))
+    incl_impul1_sess_1 = np.logical_not(np.in1d(range(impul1_sess_1['trial'].shape[0]),(impul1_sess_1['bad_trials']-1)))
+    incl_impul2_sess_1 = np.logical_not(np.in1d(range(impul2_sess_1['trial'].shape[0]),(impul2_sess_1['bad_trials']-1)))
     sel_impul1_sess1 = impul1_sess_1['trial'][incl_impul1_sess_1,:,:]
     sel_impul2_sess1 = impul2_sess_1['trial'][incl_impul2_sess_1,:,:]
 
-    incl_impul1_sess_2 = np.logical_not(np.in1d(range(impul1_sess_2['trial'].shape[0]),impul1_sess_2['bad_trials']))
-    incl_impul2_sess_2 = np.logical_not(np.in1d(range(impul2_sess_2['trial'].shape[0]),impul2_sess_2['bad_trials']))
+    incl_impul1_sess_2 = np.logical_not(np.in1d(range(impul1_sess_2['trial'].shape[0]),(impul1_sess_2['bad_trials']-1)))
+    incl_impul2_sess_2 = np.logical_not(np.in1d(range(impul2_sess_2['trial'].shape[0]),(impul2_sess_2['bad_trials']-1)))
     sel_impul1_sess2 = impul1_sess_2['trial'][incl_impul1_sess_2,:,:]
     sel_impul2_sess2 = impul2_sess_2['trial'][incl_impul2_sess_2,:,:]
 
@@ -164,15 +169,15 @@ for i in subID:
     
 #-------save results--------
     outfile = os.getcwd() + '/Subdec/'+str(i)+'dec'
-    np.savez(outfile+'_impul1_early1', dec_impul1_early1_cos = dec_impul1_early1[0], d_tune=dec_impul1_early1[1])
-    np.savez(outfile+'_impul1_late1', dec_impul1_late1_cos = dec_impul1_late1[0], d_tune=dec_impul1_late1[1])
-    np.savez(outfile+'_impul2_early1', dec_impul2_early1_cos = dec_impul2_early1[0], d_tune=dec_impul2_early1[1])
-    np.savez(outfile+'_impul2_late1', dec_impul2_late1_cos = dec_impul2_late1[0], d_tune=dec_impul2_late1[1])
+    np.savez(outfile+'_impul1_cov_corr_early1', dec_impul1_early1_cos = dec_impul1_early1[0], d_tune=dec_impul1_early1[1])
+    np.savez(outfile+'_impul1_cov_corr_late1', dec_impul1_late1_cos = dec_impul1_late1[0], d_tune=dec_impul1_late1[1])
+    np.savez(outfile+'_impul2_cov_corr_early1', dec_impul2_early1_cos = dec_impul2_early1[0], d_tune=dec_impul2_early1[1])
+    np.savez(outfile+'_impul2_cov_corr_late1', dec_impul2_late1_cos = dec_impul2_late1[0], d_tune=dec_impul2_late1[1])
 
-    np.savez(outfile+'_impul1_early2', dec_impul1_early2_cos = dec_impul1_early2[0], d_tune=dec_impul1_early2[1])
-    np.savez(outfile+'_impul1_late2', dec_impul1_late2_cos = dec_impul1_late2[0], d_tune=dec_impul1_late2[1])
-    np.savez(outfile+'_impul2_early2', dec_impul2_early2_cos = dec_impul2_early2[0], d_tune=dec_impul2_early2[1])
-    np.savez(outfile+'_impul2_late2', dec_impul2_late2_cos = dec_impul2_late2[0], d_tune=dec_impul2_late2[1])
+    np.savez(outfile+'_impul1_cov_corr_early2', dec_impul1_early2_cos = dec_impul1_early2[0], d_tune=dec_impul1_early2[1])
+    np.savez(outfile+'_impul1_cov_corr_late2', dec_impul1_late2_cos = dec_impul1_late2[0], d_tune=dec_impul1_late2[1])
+    np.savez(outfile+'_impul2_cov_corr_early2', dec_impul2_early2_cos = dec_impul2_early2[0], d_tune=dec_impul2_early2[1])
+    np.savez(outfile+'_impul2_cov_corr_late2', dec_impul2_late2_cos = dec_impul2_late2[0], d_tune=dec_impul2_late2[1])
     
 #-----individal average----
     dec_impul1_early[i-1,:] = scipy.ndimage.gaussian_filter((np.mean(dec_impul1_early1[0],0) + np.mean(dec_impul1_early2[0],0))/2,s_factor,mode='wrap')
@@ -181,13 +186,13 @@ for i in subID:
     dec_impul2_late[i-1,:] = scipy.ndimage.gaussian_filter((np.mean(dec_impul2_late1[0],0) + np.mean(dec_impul2_late2[0],0))/2,s_factor,mode='wrap')
 
 outfile_all=outpath + 'allsub_dec'
-np.save(outfile+'_impul1_early',dec_impul1_early)
-np.save(outfile+'_impul1_late',dec_impul1_late)
-np.save(outfile+'_impul2_early',dec_impul2_early)
-np.save(outfile+'_impul2_late',dec_impul2_late)
+np.save(outfile+'_impul1_cov_corr_early',dec_impul1_early)
+np.save(outfile+'_impul1_cov_corr_late',dec_impul1_late)
+np.save(outfile+'_impul2_cov_corr_early',dec_impul2_early)
+np.save(outfile+'_impul2_cov_corr_late',dec_impul2_late)
 
 
-# In[105]:
+# In[136]:
 
 
 #-----plot dec results---------
@@ -258,7 +263,7 @@ x_sig_impul2_late = time[np.nonzero(sig_all[3,:])]
 y_sig_impul2_late = np.repeat(0.00240, len(x_sig_impul2_late))
 
 
-# In[107]:
+# In[137]:
 
 
 #-----impulse 1-----
@@ -280,10 +285,10 @@ ax.axvline(.1,ymax=0.05, color='k')
 ax.legend(loc=2, fontsize='large',edgecolor='none',facecolor='none')
 plt.xlim([time[0],time[-1]])
 plt.ylim([-0.0005,0.0025])
-fig.savefig('impulse1.png')
+fig.savefig('impulse1_corr2.png')
 
 
-# In[109]:
+# In[138]:
 
 
 #-----impulse 2-----
@@ -304,7 +309,25 @@ ax.axvline(.1,ymax=0.05, color='k')
 ax.legend(loc=2, fontsize='large',edgecolor='none',facecolor='none')
 plt.xlim([time[0],time[-1]])
 plt.ylim([-0.0005,0.0025])
-fig.savefig('impulse2.png')
+fig.savefig('impulse2_corr2.png')
+
+
+# In[119]:
+
+
+print(sel_impul1_sess1.shape)
+
+
+# In[121]:
+
+
+print(np.mean(sel_impul1_sess1,1).shape)
+
+
+# In[124]:
+
+
+print(incl_impul1_sess_1)
 
 
 # In[ ]:
